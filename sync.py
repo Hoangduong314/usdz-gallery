@@ -169,13 +169,13 @@ def main():
             merged = {i: merged[i] for i in sorted(merged, reverse=True)[:cap]}
         all_entries.extend(merged.values())
         print(f"{ch:26} +{len(fresh):4} total={len(merged)}", flush=True)
-    order = {"mine": 0, "models": 1, "textures": 2}
+    order = {"mine": 0, "ext": 1}
     all_entries.sort(key=lambda e: (order.get(e["tab"], 9), -int(str(e["id"]).rsplit(":", 1)[1])))
     with open(os.path.join(BASE, "gallery.json"), "w", encoding="utf-8") as f:
         # one entry per line => git deltas stay tiny across frequent syncs
         meta = {"updated": int(time.time()), "count": len(all_entries),
-                "tabs": ["mine", "models", "textures"],
-                "tab_labels": {"mine": "🗂 Thư viện của tôi", "models": "🧊 Model 3D", "textures": "🎨 Texture"}}
+                "tabs": ["mine", "ext"],
+                "tab_labels": {"mine": "🗂 Thư viện của tôi", "ext": "📺 Kênh khác"}}
         head = json.dumps(meta, ensure_ascii=False)[:-1].rstrip()  # strip closing brace
         f.write(head + ',"entries":[\n')
         f.write(',\n'.join(json.dumps(e, ensure_ascii=False) for e in all_entries))
