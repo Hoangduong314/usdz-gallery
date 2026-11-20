@@ -1,8 +1,8 @@
 name: sync-channel
-# crawler 37 kênh tele -> gallery.json -> Pages (cron */15; re-registered 20/11)
+# crawler 37 kênh tele -> gallery.json -> Pages (daily 01:00 UTC; deep backfill: PAGES=60/run, CAP=500/ch)
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 1 * * *"
   workflow_dispatch:
   push:
     paths: [sync.py]
@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Crawl channel preview
+        env:
+          PAGES: "60"   # pages walked per channel per run (20 msgs each) = ~1200 msgs backfilled daily
+          CAP: "500"    # keep newest N entries per external channel
         run: python sync.py
       - name: Commit data
         run: |
