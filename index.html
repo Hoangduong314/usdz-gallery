@@ -3,30 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thư viện 3D — @hd_usdz</title>
+<title>Thư viện 3D — Telegram</title>
 <style>
 :root{--bg:#0e1116;--card:#161b23;--card2:#1d2430;--bd:#28303d;--fg:#e6e9ee;--mut:#8b95a5;
 --acc:#4da3ff;--tag:#233247;--tagfg:#8fc1ff;--chip:#1a2230}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--fg);font:14px/1.45 "Segoe UI",system-ui,sans-serif;padding-bottom:60px}
-header{position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 85%,transparent);padding:18px 20px 10px}
-h1{font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-h1 a{color:var(--acc);text-decoration:none;font-size:13px;font-weight:400}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 88%,transparent);padding:14px 20px 8px}
+h1{font-size:17px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #status{font-size:12px;color:var(--mut)}
-.bar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
-#q{flex:1;min-width:240px;background:var(--card2);border:1px solid var(--bd);color:var(--fg);
+#tabs{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.tab{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px 10px 0 0;
+padding:8px 16px;font-size:14px;cursor:pointer;font-weight:600}
+.tab b{color:var(--mut);font-weight:400;font-size:12px;margin-left:5px}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tab.on b{color:#d6e9ff}
+.bar{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center}
+#q{flex:1;min-width:230px;background:var(--card2);border:1px solid var(--bd);color:var(--fg);
 border-radius:10px;padding:10px 14px;font-size:15px;outline:none}
 #q:focus{border-color:var(--acc)}
-select,button.pri{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px;padding:9px 12px;font-size:13.5px;cursor:pointer}
+select,button.pri,#reload{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px;padding:9px 12px;font-size:13.5px;cursor:pointer}
 button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
-button.pri:hover{filter:brightness(1.1)}
 #count{color:var(--mut);font-size:13px;white-space:nowrap}
-#tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;max-height:132px;overflow:auto}
+#chs,#tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+#tags{max-height:112px;overflow:auto}
 .chip{background:var(--chip);border:1px solid var(--bd);color:var(--tagfg);border-radius:999px;
 padding:3px 11px;font-size:12.5px;cursor:pointer;user-select:none;white-space:nowrap}
 .chip b{color:var(--mut);font-weight:400;margin-left:4px}
 .chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-#active{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+#active{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
 #active .chip{background:var(--tag)}
 #active .chip:after{content:" ✕";opacity:.7}
 main{padding:6px 20px}
@@ -34,11 +39,12 @@ main{padding:6px 20px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;
 display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
 .card:hover{transform:translateY(-2px);border-color:var(--acc)}
-.thumb{aspect-ratio:4/3;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in}
+.thumb{aspect-ratio:4/3;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;position:relative}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.src{position:absolute;left:6px;top:6px;background:rgba(6,8,11,.75);border-radius:6px;padding:2px 8px;font-size:10.5px;color:#cfe3ff;max-width:92%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .noimg{color:var(--mut);font-size:34px}
 .body{padding:9px 11px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
-.name{font-weight:600;font-size:13.5px;line-height:1.3}
+.name{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .meta{color:var(--mut);font-size:11.5px}
 .tags{display:flex;gap:4px;flex-wrap:wrap}
 .t{background:var(--tag);color:var(--tagfg);border-radius:6px;padding:1px 7px;font-size:11px;cursor:pointer}
@@ -49,6 +55,8 @@ padding:6px 0;font-size:12px;color:var(--fg);text-decoration:none;cursor:pointer
 .btn:hover{border-color:var(--acc);color:var(--acc)}
 .btn.dl{background:#12331c;border-color:#1f6f34;color:#7ee29a}
 .btn.dl:hover{background:#1a4a27;color:#fff}
+mark{background:#5b4a1f;color:#ffd35b;border-radius:2px;padding:0 1px}
+#empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px;display:none}
 #lb{position:fixed;inset:0;background:rgba(6,8,11,.97);z-index:20;display:none;flex-direction:column}
 #lb.on{display:flex}
 .lbtop{display:flex;align-items:center;gap:14px;padding:12px 18px;color:var(--mut);font-size:13px}
@@ -62,7 +70,7 @@ color:var(--fg);width:44px;height:64px;border-radius:10px;font-size:22px;cursor:
 .nav:hover{opacity:1;background:var(--acc);color:#fff}
 .nav.prev{left:10px}.nav.next{right:10px}
 .side{width:330px;min-width:330px;border-left:1px solid var(--bd);padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
-.side .name{font-size:17px}
+.side .name{font-size:16px}
 .side .acts{display:flex;flex-direction:column;gap:8px;margin-top:auto}
 .side .btn{padding:10px 0;font-size:14px}
 #strip{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;border-top:1px solid var(--bd)}
@@ -71,7 +79,6 @@ color:var(--fg);width:44px;height:64px;border-radius:10px;font-size:22px;cursor:
 .hint{color:var(--mut);font-size:11.5px}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;
 padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
-#empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px;display:none}
 #gate{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 #gate input{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px;padding:11px 14px;font-size:15px;width:260px;outline:none}
 #gate .err{color:#f85149;font-size:12.5px;min-height:16px}
@@ -86,23 +93,24 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
  <div class="err" id="gerr"></div>
 </div>
 <header>
- <h1>🗂 Thư viện 3D <span id="status">đang tải…</span>
-   <a href="https://t.me/hd_usdz" target="_blank">kênh @hd_usdz ↗</a></h1>
+ <h1>🗂 Thư viện Telegram <span id="status">đang tải…</span></h1>
+ <div id="tabs"></div>
  <div class="bar">
-  <input id="q" placeholder="Tìm theo tên hoặc #tag… (gõ cách để ghép nhiều từ)" autocomplete="off">
-  <select id="sort"><option value="new">Mới nhất</option><option value="old">Cũ nhất</option>
-   <option value="name">Tên A→Z</option><option value="tri">Nhiều tam giác</option></select>
+  <input id="q" placeholder="Tìm trong tab… (tên, #tag, kênh — ghép từ bằng cách gõ cách nhau)" autocomplete="off">
+  <select id="sort"><option value="new">Mới nhất</option><option value="name">Tên A→Z</option>
+   <option value="tri">Nhiều tam giác</option></select>
   <button class="pri" id="play">▶ Xem liên tiếp</button>
-  <button id="reload" title="Tải lại dữ liệu (server cập nhật mỗi giờ)">⟳</button>
+  <button id="reload" title="Tải lại dữ liệu">⟳</button>
   <span id="count"></span>
  </div>
+ <div id="chs"></div>
  <div id="active"></div>
  <div id="tags"></div>
 </header>
-<main><div id="grid"></div><div id="empty">Không tìm thấy bài nào khớp bộ lọc 🤷</div></main>
+<main><div id="grid"></div><div id="empty">Không có kết quả 🤷</div></main>
 
 <div id="lb">
- <div class="lbtop"><b id="lbpos"></b><span id="lbdate"></span><span class="sp"></span>
+ <div class="lbtop"><b id="lbpos"></b><span id="lbsrc"></span><span class="sp"></span>
    <span class="hint">← → chuyển preview · Esc đóng</span>
    <button class="lbx" id="lbclose">✕</button></div>
  <div class="lbmain">
@@ -116,7 +124,7 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
    <div class="meta" id="lbmeta"></div>
    <div class="tags" id="lbtags"></div>
    <div class="acts">
-    <a class="btn dl" id="lbdl" href="#" target="_blank">⬇ Tải .glb (Telegram)</a>
+    <a class="btn dl" id="lbdl" href="#" target="_blank">⬇ Tải file (Telegram)</a>
     <span class="btn" id="lbcopy">📋 Copy #tags</span>
    </div>
    <div class="hint" id="lbfile"></div>
@@ -127,61 +135,72 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
 <div id="toast"></div>
 <script>
 const HASH="bd8e0424c1f3817e28a4a865f1a77334a33e43d39497db7e45a86577216ed71d";
-let DATA=[],selTags=new Set(),FILTERED=[],lbI=0;
+let DATA=[],TAB="mine",selTags=new Set(),selCh=null,FILTERED=[],lbI=0,TABS=[],LABELS={};
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2200)}
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 $('#go').onclick=async()=>{const p=$('#pw').value;
- if(await sha256(p)===HASH){localStorage.setItem('usdz_ok','1');$('#gate').remove();boot()}
+ if(await sha256(p)===HASH){localStorage.setItem('usdz_ok','1');$('#gate')&&$('#gate').remove();boot()}
  else $('#gerr').textContent='Sai mật khẩu';};
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()});
+function tabData(){return DATA.filter(e=>e.tab===TAB)}
 function match(e,q){if(!q.length)return true;
- const hay=(e.name+' '+e.tags.join(' ')+' '+e.meta).toLowerCase();
+ const hay=(e.name+' '+e.tags.join(' ')+' '+(e.meta||'')+' '+e.chname).toLowerCase();
  return q.every(t=>hay.includes(t.startsWith('#')?t.slice(1):t));}
-function passes(e,q){return match(e,q)&&(!selTags.size||[...selTags].every(t=>e.tags.includes(t)));}
-function currentList(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
- let list=DATA.filter(e=>passes(e,q));const s=$('#sort').value;
- list.sort((a,b)=> s==='old'?a.id-b.id : s==='name'?a.name.localeCompare(b.name)
-  : s==='tri'?(b.tri||0)-(a.tri||0) : b.id-a.id);return [list,q];}
+function passes(e,q){return match(e,q)&&(!selCh||e.ch===selCh)
+ &&(!selTags.size||[...selTags].every(t=>e.tags.includes(t)));}
 function hl(text,q){let h=esc(text);
  q.filter(t=>t.length>1&&!t.startsWith('#')).forEach(t=>{
   h=h.replace(new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>');});return h;}
+function currentList(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+ let list=tabData().filter(e=>passes(e,q));const s=$('#sort').value;
+ if(s==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
+ else if(s==='tri')list.sort((a,b)=>(b.tri||0)-(a.tri||0));
+ return [list,q];}
 function render(){const [list,q]=currentList();FILTERED=list;
- $('#count').textContent=list.length+' / '+DATA.length+' thư viện';
+ $('#count').textContent=list.length+' / '+tabData().length;
  $('#play').textContent='▶ Xem liên tiếp ('+list.length+')';
  $('#empty').style.display=list.length?'none':'block';
  $('#grid').innerHTML=list.map(e=>`
   <div class="card">
    <div class="thumb" data-zoom="${e.id}">${e.thumb
     ?`<img loading="lazy" src="${e.thumb}" onerror="this.outerHTML='<span class=noimg>📦</span>'">`
-    :`<span class="noimg">📦</span>`}</div>
+    :`<span class="noimg">📦</span>`}
+    ${TAB!=='mine'&&e.chname?`<span class="src">${esc(e.chname)}</span>`:''}</div>
    <div class="body">
     <div class="name">${hl(e.name,q)}</div>
-    <div class="meta">${esc(e.meta||'')}${e.size?' · '+esc(e.size):''} · ${e.date.slice(0,10)}</div>
+    <div class="meta">${esc(e.meta||'')}${e.size?' · '+esc(e.size):''}${e.date?' · '+e.date:''}</div>
     <div class="tags">${e.tags.slice(0,6).map(t=>`<span class="t" data-t="${t}">#${t.slice(1)}</span>`).join('')}${e.tags.length>6?`<span class="t" data-t="${e.tags[6]}">+${e.tags.length-6}</span>`:''}</div>
     <div class="acts">
-     <a class="btn dl" href="${e.url}" target="_blank" title="Mở bài viết để tải file .glb từ Telegram">⬇ .glb</a>
+     <a class="btn dl" href="${e.url}" target="_blank">${e.tab==='mine'?'⬇ .glb':'⬇ File'}</a>
      <span class="btn" data-copy="${e.tags.join(' ')}">📋</span>
     </div>
    </div>
   </div>`).join('');}
-function tagData(){const cnt={};DATA.forEach(e=>e.tags.forEach(t=>cnt[t]=(cnt[t]||0)+1));
- return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);}
-function renderTagCloud(){const top=tagData();
- $('#tags').innerHTML=top.slice(0,40).map(([t,n])=>
+function counts(arr,keyFn){const c={};arr.forEach(e=>keyFn(e).forEach(k=>c[k]=(c[k]||0)+1));
+ return Object.entries(c).sort((a,b)=>b[1]-a[1]);}
+function renderTabs(){
+ $('#tabs').innerHTML=TABS.map(t=>`<div class="tab${t===TAB?' on':''}" data-tab="${t}">${esc(LABELS[t]||t)}<b>${DATA.filter(e=>e.tab===t).length}</b></div>`).join('');}
+function renderChips(){const td=tabData();
+ const chs=counts(td,e=>[e.ch]).map(([ch,n])=>[ch,n,(td.find(e=>e.ch===ch)||{}).chname||ch]);
+ $('#chs').innerHTML=(chs.length>1?'<span class="chip'+(!selCh?' on':'')+'" data-ch=""> tất cả</span>':'')
+  +chs.map(([ch,n,nm])=>`<span class="chip${selCh===ch?' on':''}" data-ch="${ch}">${esc(nm)}<b>${n}</b></span>`).join('');
+ const top=counts(td,e=>e.tags);
+ $('#tags').innerHTML=top.slice(0,35).map(([t,n])=>
   `<span class="chip${selTags.has(t)?' on':''}" data-t="${t}">${esc(t)}<b>${n}</b></span>`).join('')
-  +(top.length>40?`<span class="chip" id="more">+${top.length-40} tag khác</span>`:'');
+  +(top.length>35?`<span class="chip" id="more">+${top.length-35} tag</span>`:'');
  $('#active').innerHTML=[...selTags].map(t=>`<span class="chip" data-t="${t}">${esc(t)}</span>`).join('');}
+function switchTab(t){TAB=t;selTags.clear();selCh=null;renderTabs();renderChips();render();}
 function lbOpen(id){if(!FILTERED.length)return;const i=FILTERED.findIndex(e=>e.id===id);
  lbI=i<0?0:i;$('#lb').classList.add('on');document.body.style.overflow='hidden';lbShow();}
 function lbShow(){const e=FILTERED[lbI];if(!e)return;
  $('#lbpos').textContent=(lbI+1)+' / '+FILTERED.length;
- $('#lbdate').textContent='· '+e.date.slice(0,10);
+ $('#lbsrc').textContent='· '+(e.chname||'')+' '+e.date;
  $('#lbimg').src=e.thumb||'';$('#lbimg').style.display=e.thumb?'block':'none';
  $('#lbname').textContent=e.name;
- $('#lbmeta').textContent=(e.meta||'')+(e.size?' · '+e.size:'');
+ $('#lbmeta').textContent=e.meta||'';
  $('#lbtags').innerHTML=e.tags.map(t=>`<span class="t" data-t="${t}">#${t.slice(1)}</span>`).join('');
  $('#lbdl').href=e.url;$('#lbcopy').dataset.copy=e.tags.join(' ');
  $('#lbfile').textContent=e.glb?('File: '+e.glb):'';
@@ -196,31 +215,34 @@ $('#lbclose').onclick=lbClose;$('#lbprev').onclick=()=>lbGo(-1);$('#lbnext').onc
 document.addEventListener('keydown',ev=>{if(!$('#lb').classList.contains('on'))return;
  if(ev.key==='ArrowRight')lbGo(1);else if(ev.key==='ArrowLeft')lbGo(-1);else if(ev.key==='Escape')lbClose();});
 document.addEventListener('click',ev=>{
- const z=ev.target.closest('[data-zoom]');if(z){lbOpen(+z.dataset.zoom);return}
+ const tb=ev.target.closest('.tab[data-tab]');if(tb){switchTab(tb.dataset.tab);return}
+ const ch=ev.target.closest('.chip[data-ch]');if(ch){selCh=ch.dataset.ch||null;renderChips();render();return}
+ const z=ev.target.closest('[data-zoom]');if(z){lbOpen(z.dataset.zoom);return}
  const s=ev.target.closest('#strip img[data-i]');if(s){lbI=+s.dataset.i;lbShow();return}
  if(ev.target.id==='lb'){lbClose();return}
  const c=ev.target.closest('.chip[data-t]');
- if(c&&c.id!=='more'){const t=c.dataset.t;selTags.has(t)?selTags.delete(t):selTags.add(t);renderTagCloud();render();return}
- if(c&&c.id==='more'){$('#tags').innerHTML=tagData().map(([t,n])=>
+ if(c&&c.id!=='more'){const t=c.dataset.t;selTags.has(t)?selTags.delete(t):selTags.add(t);renderChips();render();return}
+ if(c&&c.id==='more'){$('#tags').innerHTML=counts(tabData(),e=>e.tags).map(([t,n])=>
   `<span class="chip${selTags.has(t)?' on':''}" data-t="${t}">${esc(t)}<b>${n}</b></span>`).join('');return}
  const tg=ev.target.closest('.t[data-t]');
- if(tg){selTags.add(tg.dataset.t);renderTagCloud();render();if($('#lb').classList.contains('on'))lbClose();return}
+ if(tg){selTags.add(tg.dataset.t);renderChips();render();if($('#lb').classList.contains('on'))lbClose();return}
  const cp=ev.target.closest('[data-copy]');
  if(cp){navigator.clipboard.writeText(cp.dataset.copy).then(()=>toast('Đã copy tags 📋'));return}});
-$('#play').onclick=()=>{if(FILTERED.length)lbOpen(FILTERED[0].id);else toast('Bộ lọc trống — chọn tag trước đã')};
+$('#play').onclick=()=>{if(FILTERED.length)lbOpen(FILTERED[0].id);else toast('Tab trống — chọn kênh/tag khác')};
 $('#q').addEventListener('input',render);
 $('#sort').addEventListener('change',render);
 let VER=0;
 async function load(silent){
  try{const d=await(await fetch('gallery.json?cb='+Date.now())).json();
-  DATA=d.entries;VER=d.updated;
-  $('#status').textContent=`${DATA.length} thư viện · kênh được quét lúc ${new Date(d.updated*1000).toLocaleString('vi-VN')}`;
-  renderTagCloud();render();
-  if(silent)toast('🆕 Kênh có bài mới — đã cập nhật ('+DATA.length+' thư viện)');
+  DATA=d.entries;VER=d.updated;TABS=d.tabs||['mine'];LABELS=d.tab_labels||{};
+  if(!TABS.includes(TAB))TAB=TABS[0];
+  $('#status').textContent=`${DATA.length} mục · quét kênh lúc ${new Date(d.updated*1000).toLocaleString('vi-VN')}`;
+  renderTabs();renderChips();render();
+  if(silent)toast('🆕 Đã cập nhật dữ liệu kênh');
  }catch(e){$('#status').textContent='lỗi tải dữ liệu';}}
 $('#reload').onclick=()=>load();
 function boot(){load();setInterval(()=>load(true),600000);}
-if(localStorage.getItem('usdz_ok')==='1'&&crypto&&crypto.subtle){$('#gate').remove();boot()}
+if(localStorage.getItem('usdz_ok')==='1'&&crypto&&crypto.subtle&&$('#gate')){$('#gate').remove();boot()}
 </script>
 </body>
 </html>
