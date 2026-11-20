@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thư viện 3D — @hd_usdz</title>
+<style>
+:root{--bg:#0e1116;--card:#161b23;--card2:#1d2430;--bd:#28303d;--fg:#e6e9ee;--mut:#8b95a5;
+--acc:#4da3ff;--tag:#233247;--tagfg:#8fc1ff;--chip:#1a2230}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 "Segoe UI",system-ui,sans-serif;padding-bottom:60px}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 85%,transparent);padding:18px 20px 10px}
+h1{font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1 a{color:var(--acc);text-decoration:none;font-size:13px;font-weight:400}
+#status{font-size:12px;color:var(--mut)}
+.bar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+#q{flex:1;min-width:240px;background:var(--card2);border:1px solid var(--bd);color:var(--fg);
+border-radius:10px;padding:10px 14px;font-size:15px;outline:none}
+#q:focus{border-color:var(--acc)}
+select,button.pri{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px;padding:9px 12px;font-size:13.5px;cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.pri:hover{filter:brightness(1.1)}
+#count{color:var(--mut);font-size:13px;white-space:nowrap}
+#tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;max-height:132px;overflow:auto}
+.chip{background:var(--chip);border:1px solid var(--bd);color:var(--tagfg);border-radius:999px;
+padding:3px 11px;font-size:12.5px;cursor:pointer;user-select:none;white-space:nowrap}
+.chip b{color:var(--mut);font-weight:400;margin-left:4px}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+#active{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+#active .chip{background:var(--tag)}
+#active .chip:after{content:" ✕";opacity:.7}
+main{padding:6px 20px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;
+display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
+.card:hover{transform:translateY(-2px);border-color:var(--acc)}
+.thumb{aspect-ratio:4/3;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.noimg{color:var(--mut);font-size:34px}
+.body{padding:9px 11px 11px;display:flex;flex-direction:column;gap:6px;flex:1}
+.name{font-weight:600;font-size:13.5px;line-height:1.3}
+.meta{color:var(--mut);font-size:11.5px}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.t{background:var(--tag);color:var(--tagfg);border-radius:6px;padding:1px 7px;font-size:11px;cursor:pointer}
+.t:hover{background:var(--acc);color:#fff}
+.acts{margin-top:auto;display:flex;gap:6px}
+.btn{flex:1;text-align:center;background:var(--card2);border:1px solid var(--bd);border-radius:8px;
+padding:6px 0;font-size:12px;color:var(--fg);text-decoration:none;cursor:pointer}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.dl{background:#12331c;border-color:#1f6f34;color:#7ee29a}
+.btn.dl:hover{background:#1a4a27;color:#fff}
+#lb{position:fixed;inset:0;background:rgba(6,8,11,.97);z-index:20;display:none;flex-direction:column}
+#lb.on{display:flex}
+.lbtop{display:flex;align-items:center;gap:14px;padding:12px 18px;color:var(--mut);font-size:13px}
+.lbtop .sp{flex:1}
+.lbx{background:none;border:none;color:var(--fg);font-size:26px;cursor:pointer}
+.lbmain{flex:1;display:flex;min-height:0}
+.lbimg{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-width:0;padding:0 60px}
+.lbimg img{max-width:100%;max-height:calc(100vh - 160px);object-fit:contain;border-radius:8px;background:var(--card)}
+.nav{position:absolute;top:50%;transform:translateY(-50%);background:var(--card2);border:1px solid var(--bd);
+color:var(--fg);width:44px;height:64px;border-radius:10px;font-size:22px;cursor:pointer;opacity:.75;z-index:2}
+.nav:hover{opacity:1;background:var(--acc);color:#fff}
+.nav.prev{left:10px}.nav.next{right:10px}
+.side{width:330px;min-width:330px;border-left:1px solid var(--bd);padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.side .name{font-size:17px}
+.side .acts{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.side .btn{padding:10px 0;font-size:14px}
+#strip{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;border-top:1px solid var(--bd)}
+#strip img{height:52px;border-radius:6px;opacity:.45;cursor:pointer;border:2px solid transparent;flex:none}
+#strip img.cur{opacity:1;border-color:var(--acc)}
+.hint{color:var(--mut);font-size:11.5px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;
+padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}
+#empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px;display:none}
+#gate{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+#gate input{background:var(--card2);border:1px solid var(--bd);color:var(--fg);border-radius:10px;padding:11px 14px;font-size:15px;width:260px;outline:none}
+#gate .err{color:#f85149;font-size:12.5px;min-height:16px}
+@media (max-width:900px){.lbmain{flex-direction:column}.side{width:100%;min-width:0;border-left:none;border-top:1px solid var(--bd)}}
+</style>
+</head>
+<body>
+<div id="gate">
+ <h1>🗂 Thư viện 3D</h1>
+ <input id="pw" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+ <button class="pri" id="go">Vào</button>
+ <div class="err" id="gerr"></div>
+</div>
+<header>
+ <h1>🗂 Thư viện 3D <span id="status">đang tải…</span>
+   <a href="https://t.me/hd_usdz" target="_blank">kênh @hd_usdz ↗</a></h1>
+ <div class="bar">
+  <input id="q" placeholder="Tìm theo tên hoặc #tag… (gõ cách để ghép nhiều từ)" autocomplete="off">
+  <select id="sort"><option value="new">Mới nhất</option><option value="old">Cũ nhất</option>
+   <option value="name">Tên A→Z</option><option value="tri">Nhiều tam giác</option></select>
+  <button class="pri" id="play">▶ Xem liên tiếp</button>
+  <button id="reload" title="Tải lại dữ liệu (server cập nhật mỗi giờ)">⟳</button>
+  <span id="count"></span>
+ </div>
+ <div id="active"></div>
+ <div id="tags"></div>
+</header>
+<main><div id="grid"></div><div id="empty">Không tìm thấy bài nào khớp bộ lọc 🤷</div></main>
+
+<div id="lb">
+ <div class="lbtop"><b id="lbpos"></b><span id="lbdate"></span><span class="sp"></span>
+   <span class="hint">← → chuyển preview · Esc đóng</span>
+   <button class="lbx" id="lbclose">✕</button></div>
+ <div class="lbmain">
+  <div class="lbimg">
+   <button class="nav prev" id="lbprev">‹</button>
+   <img id="lbimg" alt="">
+   <button class="nav next" id="lbnext">›</button>
+  </div>
+  <div class="side">
+   <div class="name" id="lbname"></div>
+   <div class="meta" id="lbmeta"></div>
+   <div class="tags" id="lbtags"></div>
+   <div class="acts">
+    <a class="btn dl" id="lbdl" href="#" target="_blank">⬇ Tải .glb (Telegram)</a>
+    <span class="btn" id="lbcopy">📋 Copy #tags</span>
+   </div>
+   <div class="hint" id="lbfile"></div>
+  </div>
+ </div>
+ <div id="strip"></div>
+</div>
+<div id="toast"></div>
+<script>
+const HASH="9b02b12b7b4139d251057958e056e2a1a07f5650235cdc1c0295b1036ad85653";
+let DATA=[],selTags=new Set(),FILTERED=[],lbI=0;
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2200)}
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+ return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+$('#go').onclick=async()=>{const p=$('#pw').value;
+ if(await sha256(p)===HASH){localStorage.setItem('usdz_ok','1');$('#gate').remove();boot()}
+ else $('#gerr').textContent='Sai mật khẩu';};
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()});
+function match(e,q){if(!q.length)return true;
+ const hay=(e.name+' '+e.tags.join(' ')+' '+e.meta).toLowerCase();
+ return q.every(t=>hay.includes(t.startsWith('#')?t.slice(1):t));}
+function passes(e,q){return match(e,q)&&(!selTags.size||[...selTags].every(t=>e.tags.includes(t)));}
+function currentList(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+ let list=DATA.filter(e=>passes(e,q));const s=$('#sort').value;
+ list.sort((a,b)=> s==='old'?a.id-b.id : s==='name'?a.name.localeCompare(b.name)
+  : s==='tri'?(b.tri||0)-(a.tri||0) : b.id-a.id);return [list,q];}
+function hl(text,q){let h=esc(text);
+ q.filter(t=>t.length>1&&!t.startsWith('#')).forEach(t=>{
+  h=h.replace(new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>');});return h;}
+function render(){const [list,q]=currentList();FILTERED=list;
+ $('#count').textContent=list.length+' / '+DATA.length+' thư viện';
+ $('#play').textContent='▶ Xem liên tiếp ('+list.length+')';
+ $('#empty').style.display=list.length?'none':'block';
+ $('#grid').innerHTML=list.map(e=>`
+  <div class="card">
+   <div class="thumb" data-zoom="${e.id}">${e.thumb
+    ?`<img loading="lazy" src="${e.thumb}" onerror="this.outerHTML='<span class=noimg>📦</span>'">`
+    :`<span class="noimg">📦</span>`}</div>
+   <div class="body">
+    <div class="name">${hl(e.name,q)}</div>
+    <div class="meta">${esc(e.meta||'')}${e.size?' · '+esc(e.size):''} · ${e.date.slice(0,10)}</div>
+    <div class="tags">${e.tags.slice(0,6).map(t=>`<span class="t" data-t="${t}">#${t.slice(1)}</span>`).join('')}${e.tags.length>6?`<span class="t" data-t="${e.tags[6]}">+${e.tags.length-6}</span>`:''}</div>
+    <div class="acts">
+     <a class="btn dl" href="${e.url}" target="_blank" title="Mở bài viết để tải file .glb từ Telegram">⬇ .glb</a>
+     <span class="btn" data-copy="${e.tags.join(' ')}">📋</span>
+    </div>
+   </div>
+  </div>`).join('');}
+function tagData(){const cnt={};DATA.forEach(e=>e.tags.forEach(t=>cnt[t]=(cnt[t]||0)+1));
+ return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);}
+function renderTagCloud(){const top=tagData();
+ $('#tags').innerHTML=top.slice(0,40).map(([t,n])=>
+  `<span class="chip${selTags.has(t)?' on':''}" data-t="${t}">${esc(t)}<b>${n}</b></span>`).join('')
+  +(top.length>40?`<span class="chip" id="more">+${top.length-40} tag khác</span>`:'');
+ $('#active').innerHTML=[...selTags].map(t=>`<span class="chip" data-t="${t}">${esc(t)}</span>`).join('');}
+function lbOpen(id){if(!FILTERED.length)return;const i=FILTERED.findIndex(e=>e.id===id);
+ lbI=i<0?0:i;$('#lb').classList.add('on');document.body.style.overflow='hidden';lbShow();}
+function lbShow(){const e=FILTERED[lbI];if(!e)return;
+ $('#lbpos').textContent=(lbI+1)+' / '+FILTERED.length;
+ $('#lbdate').textContent='· '+e.date.slice(0,10);
+ $('#lbimg').src=e.thumb||'';$('#lbimg').style.display=e.thumb?'block':'none';
+ $('#lbname').textContent=e.name;
+ $('#lbmeta').textContent=(e.meta||'')+(e.size?' · '+e.size:'');
+ $('#lbtags').innerHTML=e.tags.map(t=>`<span class="t" data-t="${t}">#${t.slice(1)}</span>`).join('');
+ $('#lbdl').href=e.url;$('#lbcopy').dataset.copy=e.tags.join(' ');
+ $('#lbfile').textContent=e.glb?('File: '+e.glb):'';
+ const a=Math.max(0,lbI-8),b=Math.min(FILTERED.length,a+17);
+ $('#strip').innerHTML=FILTERED.slice(a,b).map((x,j)=>x.thumb
+  ?`<img src="${x.thumb}" class="${a+j===lbI?'cur':''}" data-i="${a+j}">`:
+  `<div style="width:70px;height:52px;flex:none;background:var(--card2);border-radius:6px"></div>`).join('');
+ [1,-1].forEach(d=>{const n=FILTERED[lbI+d];if(n&&n.thumb){const i=new Image();i.src=n.thumb}});}
+function lbGo(d){lbI=Math.min(FILTERED.length-1,Math.max(0,lbI+d));lbShow()}
+function lbClose(){$('#lb').classList.remove('on');document.body.style.overflow=''}
+$('#lbclose').onclick=lbClose;$('#lbprev').onclick=()=>lbGo(-1);$('#lbnext').onclick=()=>lbGo(1);
+document.addEventListener('keydown',ev=>{if(!$('#lb').classList.contains('on'))return;
+ if(ev.key==='ArrowRight')lbGo(1);else if(ev.key==='ArrowLeft')lbGo(-1);else if(ev.key==='Escape')lbClose();});
+document.addEventListener('click',ev=>{
+ const z=ev.target.closest('[data-zoom]');if(z){lbOpen(+z.dataset.zoom);return}
+ const s=ev.target.closest('#strip img[data-i]');if(s){lbI=+s.dataset.i;lbShow();return}
+ if(ev.target.id==='lb'){lbClose();return}
+ const c=ev.target.closest('.chip[data-t]');
+ if(c&&c.id!=='more'){const t=c.dataset.t;selTags.has(t)?selTags.delete(t):selTags.add(t);renderTagCloud();render();return}
+ if(c&&c.id==='more'){$('#tags').innerHTML=tagData().map(([t,n])=>
+  `<span class="chip${selTags.has(t)?' on':''}" data-t="${t}">${esc(t)}<b>${n}</b></span>`).join('');return}
+ const tg=ev.target.closest('.t[data-t]');
+ if(tg){selTags.add(tg.dataset.t);renderTagCloud();render();if($('#lb').classList.contains('on'))lbClose();return}
+ const cp=ev.target.closest('[data-copy]');
+ if(cp){navigator.clipboard.writeText(cp.dataset.copy).then(()=>toast('Đã copy tags 📋'));return}});
+$('#play').onclick=()=>{if(FILTERED.length)lbOpen(FILTERED[0].id);else toast('Bộ lọc trống — chọn tag trước đã')};
+$('#q').addEventListener('input',render);
+$('#sort').addEventListener('change',render);
+let VER=0;
+async function load(silent){
+ try{const d=await(await fetch('gallery.json?cb='+Date.now())).json();
+  DATA=d.entries;VER=d.updated;
+  $('#status').textContent=`${DATA.length} thư viện · kênh được quét lúc ${new Date(d.updated*1000).toLocaleString('vi-VN')}`;
+  renderTagCloud();render();
+  if(silent)toast('🆕 Kênh có bài mới — đã cập nhật ('+DATA.length+' thư viện)');
+ }catch(e){$('#status').textContent='lỗi tải dữ liệu';}}
+$('#reload').onclick=()=>load();
+function boot(){load();setInterval(()=>load(true),600000);}
+if(localStorage.getItem('usdz_ok')==='1'&&crypto&&crypto.subtle){$('#gate').remove();boot()}
+</script>
+</body>
+</html>
