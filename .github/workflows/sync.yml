@@ -1,4 +1,5 @@
 name: sync-channel
+# crawler 37 kênh tele -> gallery.json -> Pages (cron */15; re-registered 20/11)
 on:
   schedule:
     - cron: "*/15 * * * *"
