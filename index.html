@@ -56,6 +56,7 @@ padding:6px 0;font-size:12px;color:var(--fg);text-decoration:none;cursor:pointer
 .btn.dl{background:#12331c;border-color:#1f6f34;color:#7ee29a}
 .btn.dl:hover{background:#1a4a27;color:#fff}
 mark{background:#5b4a1f;color:#ffd35b;border-radius:2px;padding:0 1px}
+#sentinel{text-align:center;color:var(--mut);padding:18px;font-size:13px}
 #empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px;display:none}
 #lb{position:fixed;inset:0;background:rgba(6,8,11,.97);z-index:20;display:none;flex-direction:column}
 #lb.on{display:flex}
@@ -96,7 +97,7 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
  <h1>🗂 Thư viện Telegram <span id="status">đang tải…</span></h1>
  <div id="tabs"></div>
  <div class="bar">
-  <input id="q" placeholder="Tìm trong tab… (tên, #tag, kênh — ghép từ bằng cách gõ cách nhau)" autocomplete="off">
+  <input id="q" placeholder="Tìm trong tab… (tên, #tag, kênh — cách nhau bằng dấu cách)" autocomplete="off">
   <select id="sort"><option value="new">Mới nhất</option><option value="name">Tên A→Z</option>
    <option value="tri">Nhiều tam giác</option></select>
   <button class="pri" id="play">▶ Xem liên tiếp</button>
@@ -107,7 +108,7 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
  <div id="active"></div>
  <div id="tags"></div>
 </header>
-<main><div id="grid"></div><div id="empty">Không có kết quả 🤷</div></main>
+<main><div id="grid"></div><div id="sentinel"></div><div id="empty">Không có kết quả 🤷</div></main>
 
 <div id="lb">
  <div class="lbtop"><b id="lbpos"></b><span id="lbsrc"></span><span class="sp"></span>
@@ -135,7 +136,8 @@ padding:8px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity
 <div id="toast"></div>
 <script>
 const HASH="bd8e0424c1f3817e28a4a865f1a77334a33e43d39497db7e45a86577216ed71d";
-let DATA=[],TAB="mine",selTags=new Set(),selCh=null,FILTERED=[],lbI=0,TABS=[],LABELS={};
+const CHUNK=150;
+let DATA=[],TAB="mine",selTags=new Set(),selCh=null,FILTERED=[],SHOWN=0,lbI=0,TABS=[],LABELS={};
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2200)}
@@ -154,16 +156,7 @@ function passes(e,q){return match(e,q)&&(!selCh||e.ch===selCh)
 function hl(text,q){let h=esc(text);
  q.filter(t=>t.length>1&&!t.startsWith('#')).forEach(t=>{
   h=h.replace(new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>');});return h;}
-function currentList(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
- let list=tabData().filter(e=>passes(e,q));const s=$('#sort').value;
- if(s==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
- else if(s==='tri')list.sort((a,b)=>(b.tri||0)-(a.tri||0));
- return [list,q];}
-function render(){const [list,q]=currentList();FILTERED=list;
- $('#count').textContent=list.length+' / '+tabData().length;
- $('#play').textContent='▶ Xem liên tiếp ('+list.length+')';
- $('#empty').style.display=list.length?'none':'block';
- $('#grid').innerHTML=list.map(e=>`
+function cardHTML(e,q){return `
   <div class="card">
    <div class="thumb" data-zoom="${e.id}">${e.thumb
     ?`<img loading="lazy" src="${e.thumb}" onerror="this.outerHTML='<span class=noimg>📦</span>'">`
@@ -178,7 +171,26 @@ function render(){const [list,q]=currentList();FILTERED=list;
      <span class="btn" data-copy="${e.tags.join(' ')}">📋</span>
     </div>
    </div>
-  </div>`).join('');}
+  </div>`;}
+function drawGrid(){
+ const slice=FILTERED.slice(0,SHOWN);
+ $('#grid').innerHTML=slice.map(e=>cardHTML(e,CURRENT_Q)).join('');
+ $('#sentinel').textContent=SHOWN<FILTERED.length?`↓ đang hiện ${SHOWN}/${FILTERED.length} — cuộn để xem thêm`:(FILTERED.length?'':'');
+}
+let CURRENT_Q=[];
+function render(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+ CURRENT_Q=q;
+ let list=tabData().filter(e=>passes(e,q));const s=$('#sort').value;
+ if(s==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
+ else if(s==='tri')list.sort((a,b)=>(b.tri||0)-(a.tri||0));
+ FILTERED=list;SHOWN=Math.min(CHUNK,list.length);
+ $('#count').textContent=list.length+' / '+tabData().length;
+ $('#play').textContent='▶ Xem liên tiếp ('+list.length+')';
+ $('#empty').style.display=list.length?'none':'block';
+ drawGrid();
+ window.scrollTo({top:0});}
+const io=new IntersectionObserver(es=>{for(const en of es){if(en.isIntersecting&&SHOWN<FILTERED.length){SHOWN=Math.min(SHOWN+CHUNK,FILTERED.length);drawGrid();}}},{rootMargin:'800px'});
+io.observe($('#sentinel'));
 function counts(arr,keyFn){const c={};arr.forEach(e=>keyFn(e).forEach(k=>c[k]=(c[k]||0)+1));
  return Object.entries(c).sort((a,b)=>b[1]-a[1]);}
 function renderTabs(){

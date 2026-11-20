@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
   push:
     paths: [sync.py]
+concurrency:
+  group: sync
+  cancel-in-progress: false
 jobs:
   sync:
     runs-on: ubuntu-latest

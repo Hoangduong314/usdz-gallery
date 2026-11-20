@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""sync.py — crawl MULTIPLE public Telegram channels -> gallery.json (GitHub Actions).
+"""sync.py — INCREMENTAL deep crawler for multiple public Telegram channels.
 
-Tabs: mine (@hd_usdz, glb+photo+caption layout), models (3D model channels),
-textures (material/texture channels). External channels use a GENERIC parser:
-each photo post = one entry {thumb, name, tags, url}. @hd_usdz keeps its
-document(glb)+photo-reply pairing so rich tags + glb info still work.
-Channel list = channels.json (ch, tab, name). Public preview only: no token, no session.
+Each run: for every channel in channels.json, crawl backwards until hitting ids
+already stored in gallery.json (from previous runs). History therefore ACCUMULATES
+sync after sync (deep backfill up to PAGES_CAP pages/run); new posts arrive within
+one cron tick. @hd_usdz keeps glb+photo pairing; external channels: photo post =
+{thumb, name, tags, link to the t.me post}. Public preview only: no token, no login.
 """
 import json, re, os, sys, time, html
 import urllib.request
@@ -14,7 +14,9 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 UA = {"User-Agent": "Mozilla/5.0"}
 TAG_RE = re.compile(r"#[\w\u00c0-\u1ef9]+")
 MSG_RE = re.compile(r'(?=<div class="tgme_widget_message_wrap)')
-PAGES_PER_CH = int(os.environ.get("PAGES", "3"))  # ~60 recent posts per channel
+PAGES_CAP = int(os.environ.get("PAGES", "20"))     # max pages fetched per run per channel
+CAP_PER_CH = int(os.environ.get("CAP", "250"))     # keep newest N entries per external ch
+MINE_CAP = 100000                                  # own library: keep everything
 
 def fetch(url):
     req = urllib.request.Request(url, headers=UA)
@@ -47,7 +49,8 @@ def parse_page(ch, h):
         msgs.append(msg)
     return msgs
 
-def crawl_channel(ch, pages=PAGES_PER_CH):
+def crawl_channel(ch, stop_below=None, pages=PAGES_CAP):
+    """Walk newest->oldest; stop when page min id reaches stop_below."""
     got, before = {}, None
     for _ in range(pages):
         url = f"https://t.me/s/{ch}" + (f"?before={before}" if before else "")
@@ -55,13 +58,24 @@ def crawl_channel(ch, pages=PAGES_PER_CH):
             page = parse_page(ch, fetch(url))
         except Exception as e:
             print("  page err", ch, e, file=sys.stderr)
-            break
+            time.sleep(2)
+            try:
+                page = parse_page(ch, fetch(url))
+            except Exception:
+                break
         if not page:
             break
+        new = 0
         for m in page:
-            got[m["id"]] = m
-        before = min(m["id"] for m in page)
-        time.sleep(0.3)
+            if m["id"] not in got:
+                got[m["id"]] = m; new += 1
+        mn = min(m["id"] for m in page)
+        before = mn
+        time.sleep(0.25)
+        if stop_below and mn <= stop_below:
+            break
+        if new == 0:
+            break
     return list(got.values())
 
 def clean_name(s):
@@ -76,7 +90,7 @@ def entry_generic(ch, tab, chname, m):
     name = clean_name(cap) or clean_name(m.get("doc") or "") or chname
     tags = sorted(set(t.lower() for t in TAG_RE.findall(cap)))[:24]
     return {"id": f"{ch}:{m['id']}", "ch": ch, "tab": tab, "chname": chname,
-            "name": name, "meta": (cap.split("\n")[0][:90] if cap else ""), "tags": tags,
+            "name": name, "meta": "", "tags": tags,
             "thumb": m.get("thumb"), "glb": None, "size": m.get("size"),
             "date": m.get("date", ""), "url": f"https://t.me/{ch}/{m['id']}"}
 
@@ -104,46 +118,69 @@ def entry_hdusdz(m, docmsg):
             "glb_msg": (docmsg or {}).get("id"),
             "url": f"https://t.me/hd_usdz/{mid}"}
 
+def load_prev():
+    p = os.path.join(BASE, "gallery.json")
+    by_ch = {}
+    if os.path.exists(p):
+        try:
+            d = json.load(open(p, encoding="utf-8"))
+            for e in d.get("entries", []):
+                try:
+                    mid = int(str(e["id"]).rsplit(":", 1)[1])
+                except Exception:
+                    continue
+                by_ch.setdefault(e["ch"], {})[mid] = e
+        except Exception:
+            pass
+    return by_ch
+
 def main():
     chs = json.load(open(os.path.join(BASE, "channels.json"), encoding="utf-8"))
-    entries, seen_ids = [], set()
+    prev = load_prev()
+    all_entries = []
     for c in chs:
         ch, tab, name = c["ch"], c["tab"], c.get("name", c["ch"])
-        pages = 40 if ch == "hd_usdz" else PAGES_PER_CH  # own library = full history
-        msgs = crawl_channel(ch, pages)
-        n0 = len(entries)
+        known = prev.get(ch, {})
+        oldest = min(known) if known else None
+        stop = (oldest - 40) if oldest else None      # 40-msg overlap for pairing safety
+        msgs = crawl_channel(ch, stop_below=stop)
+        fresh = {}
         if ch == "hd_usdz":
             by_id = {m["id"]: m for m in msgs}
             consumed = set()
             for m in sorted(msgs, key=lambda x: x["id"]):
                 if m["thumb"] and m["reply"] and m["reply"] in by_id and by_id[m["reply"]]["doc"]:
-                    d = by_id[m["reply"]]; consumed.add(d["id"]); entries.append(entry_hdusdz(m, d))
+                    d = by_id[m["reply"]]; consumed.add(d["id"]); fresh[m["id"]] = entry_hdusdz(m, d)
                 elif m["thumb"]:
-                    entries.append(entry_hdusdz(m, None))
+                    fresh[m["id"]] = entry_hdusdz(m, None)
             for m in sorted(msgs, key=lambda x: x["id"]):
                 if m["doc"] and m["id"] not in consumed:
-                    entries.append(entry_hdusdz(None, m))
+                    fresh[m["id"]] = fresh.get(m["id"]) or entry_hdusdz(None, m)
         else:
             seen = set()
             for m in sorted(msgs, key=lambda x: -x["id"]):
                 if not m["thumb"] or m["id"] in seen:
                     continue
                 seen.add(m["id"])
-                entries.append(entry_generic(ch, tab, name, m))
-        print(f"{ch:28} tab={tab:8} new={len(entries)-n0}", flush=True)
-    # dedupe ids, newest first (channel msg ids are per-channel so id string is unique)
-    out = []
-    for e in entries:
-        if e["id"] not in seen_ids:
-            seen_ids.add(e["id"]); out.append(e)
+                fresh[m["id"]] = entry_generic(ch, tab, name, m)
+        merged = {**known, **fresh}
+        cap = MINE_CAP if ch == "hd_usdz" else CAP_PER_CH
+        if len(merged) > cap:
+            merged = {i: merged[i] for i in sorted(merged, reverse=True)[:cap]}
+        all_entries.extend(merged.values())
+        print(f"{ch:26} +{len(fresh):4} total={len(merged)}", flush=True)
     order = {"mine": 0, "models": 1, "textures": 2}
-    out.sort(key=lambda e: (order.get(e["tab"], 9), -int(e["id"].rsplit(":", 1)[1])))
+    all_entries.sort(key=lambda e: (order.get(e["tab"], 9), -int(str(e["id"]).rsplit(":", 1)[1])))
     with open(os.path.join(BASE, "gallery.json"), "w", encoding="utf-8") as f:
-        json.dump({"updated": int(time.time()), "count": len(out),
-                   "tabs": ["mine", "models", "textures"],
-                   "tab_labels": {"mine": "🗂 Thư viện của tôi", "models": "🧊 Model 3D", "textures": "🎨 Texture"},
-                   "entries": out}, f, ensure_ascii=False)
-    print(f"WROTE gallery.json: {len(out)} entries", flush=True)
+        # one entry per line => git deltas stay tiny across frequent syncs
+        meta = {"updated": int(time.time()), "count": len(all_entries),
+                "tabs": ["mine", "models", "textures"],
+                "tab_labels": {"mine": "🗂 Thư viện của tôi", "models": "🧊 Model 3D", "textures": "🎨 Texture"}}
+        head = json.dumps(meta, ensure_ascii=False)[:-1].rstrip()  # strip closing brace
+        f.write(head + ',"entries":[\n')
+        f.write(',\n'.join(json.dumps(e, ensure_ascii=False) for e in all_entries))
+        f.write('\n]}')
+    print(f"WROTE gallery.json: {len(all_entries)} entries", flush=True)
 
 if __name__ == "__main__":
     main()
